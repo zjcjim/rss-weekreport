@@ -213,9 +213,12 @@ def report_title(markdown: str, fallback: str) -> str:
     return fallback
 
 
+def markdown_renderer() -> MarkdownIt:
+    return MarkdownIt("commonmark", {"html": False, "linkify": True}).enable("table")
+
+
 def write_page(path: Path, title: str, body: str, feed_url: str) -> None:
-    renderer = MarkdownIt("commonmark", {"html": False, "linkify": True})
-    body_html = renderer.render(body)
+    body_html = markdown_renderer().render(body)
     page = f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -228,6 +231,9 @@ def write_page(path: Path, title: str, body: str, feed_url: str) -> None:
     h1, h2, h3 {{ line-height: 1.3; }}
     a {{ color: #0969da; }}
     blockquote {{ border-left: 4px solid #d0d7de; margin-left: 0; padding-left: 1rem; color: #59636e; }}
+    table {{ border-collapse: collapse; display: block; max-width: 100%; overflow-x: auto; }}
+    th, td {{ border: 1px solid #d0d7de; padding: .5rem .75rem; text-align: left; vertical-align: top; }}
+    th {{ background: #f6f8fa; }}
   </style>
 </head>
 <body>{body_html}</body>
@@ -323,8 +329,8 @@ def publish_report(
     feed_url = urljoin(site_url.rstrip("/") + "/", "feed.xml")
     page_path = docs_dir / relative_page
     write_page(page_path, title, report, feed_url)
-    renderer = MarkdownIt("commonmark", {"html": False, "linkify": True})
-    update_rss(docs_dir, site_url.rstrip("/"), title, renderer.render(report), report_url, period, now)
+    report_html = markdown_renderer().render(report)
+    update_rss(docs_dir, site_url.rstrip("/"), title, report_html, report_url, period, now)
     write_index(docs_dir, site_url.rstrip("/"))
 
 

@@ -109,3 +109,20 @@ def test_publish_report_updates_single_rss_feed(tmp_path: Path) -> None:
     parsed_feed = rss_weekreport.feedparser.parse(str(docs / "feed.xml"))
     assert not parsed_feed.bozo
     assert len(parsed_feed.entries) == 2
+
+
+def test_write_page_renders_markdown_table(tmp_path: Path) -> None:
+    output = tmp_path / "report.html"
+    markdown = """# 数据统计
+
+| 指标 | 数值 |
+| --- | --- |
+| 新闻数量 | 42 |
+"""
+    rss_weekreport.write_page(output, "数据统计", markdown, "https://example.com/feed.xml")
+    page = output.read_text(encoding="utf-8")
+
+    assert "<table>" in page
+    assert "<th>指标</th>" in page
+    assert "<td>42</td>" in page
+    assert "| 指标 | 数值 |" not in page

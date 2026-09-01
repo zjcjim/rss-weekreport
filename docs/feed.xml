@@ -53,21 +53,90 @@
 &lt;/ul&gt;
 &lt;hr /&gt;
 &lt;h2&gt;数据统计&lt;/h2&gt;
-&lt;p&gt;| 指标 | 数值 | 来源 |
-|------|------|------|
-| 光伏发电装机容量（截至7月底） | 12.86亿千瓦 | &lt;a href="https://wallstreetcn.com/articles/3780840"&gt;华尔街见闻&lt;/a&gt; |
-| 煤电装机容量（截至7月底） | 12.85亿千瓦 | &lt;a href="https://wallstreetcn.com/articles/3780840"&gt;华尔街见闻&lt;/a&gt; |
-| 欧元区8月CPI同比 | 3.3%（7月为2.9%） | &lt;a href="https://wallstreetcn.com/articles/3780827"&gt;华尔街见闻&lt;/a&gt; |
-| 美国7月JOLTS职位空缺 | 727.1万人（预期738万） | &lt;a href="https://wallstreetcn.com/articles/3780843"&gt;华尔街见闻&lt;/a&gt; |
-| 美国8月ISM制造业指数 | 54.6（预期55.2） | &lt;a href="https://wallstreetcn.com/articles/3780842"&gt;华尔街见闻&lt;/a&gt; |
-| 布伦特原油（油轮遇袭后） | 突破92美元/桶 | &lt;a href="https://wallstreetcn.com/articles/3780835"&gt;华尔街见闻&lt;/a&gt; |
-| 零跑8月全球交付量 | 103,129辆（同比+80.7%） | &lt;a href="https://wallstreetcn.com/articles/3780832"&gt;华尔街见闻&lt;/a&gt; |
-| 蔚来二季度营收 | 321.4亿元（同比+69%） | &lt;a href="https://wallstreetcn.com/articles/3780826"&gt;华尔街见闻&lt;/a&gt; |
-| 芒果超媒9月1日涨幅 | +20.02%（3日涨幅+44.44%） | &lt;a href="https://36kr.com/p/3964575113436680?f=rss"&gt;36氪&lt;/a&gt; |
-| 海鸥住工连续涨停天数 | 7个交易日（累计涨幅95.54%） | &lt;a href="https://36kr.com/newsflashes/3964807330176512?f=rss"&gt;36氪&lt;/a&gt; |
-| 英伟达对联发科投资额 | 35亿美元 | &lt;a href="https://wallstreetcn.com/articles/3780783"&gt;华尔街见闻&lt;/a&gt; |
-| 诺瓦聚变Pre-A系列融资 | 12亿元（投后估值超百亿） | &lt;a href="https://36kr.com/p/3964357394750985?f=rss"&gt;36氪&lt;/a&gt; |
-| 巢匠科技天使轮系列融资 | 数亿元 | &lt;a href="https://36kr.com/p/3962818472901761?f=rss"&gt;36氪&lt;/a&gt; |
-| 北京银行上半年营收 | 382.48亿元（同比+5.60%） | &lt;a href="https://wallstreetcn.com/articles/3780836"&gt;华尔街见闻&lt;/a&gt; |
-| 快手二季度营收 | 355亿元（同比+1.4%） | &lt;a href="http://www.geekpark.net/news/369631"&gt;极客公园&lt;/a&gt; |&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;指标&lt;/th&gt;
+&lt;th&gt;数值&lt;/th&gt;
+&lt;th&gt;来源&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;光伏发电装机容量（截至7月底）&lt;/td&gt;
+&lt;td&gt;12.86亿千瓦&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780840"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;煤电装机容量（截至7月底）&lt;/td&gt;
+&lt;td&gt;12.85亿千瓦&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780840"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;欧元区8月CPI同比&lt;/td&gt;
+&lt;td&gt;3.3%（7月为2.9%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780827"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;美国7月JOLTS职位空缺&lt;/td&gt;
+&lt;td&gt;727.1万人（预期738万）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780843"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;美国8月ISM制造业指数&lt;/td&gt;
+&lt;td&gt;54.6（预期55.2）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780842"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;布伦特原油（油轮遇袭后）&lt;/td&gt;
+&lt;td&gt;突破92美元/桶&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780835"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;零跑8月全球交付量&lt;/td&gt;
+&lt;td&gt;103,129辆（同比+80.7%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780832"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;蔚来二季度营收&lt;/td&gt;
+&lt;td&gt;321.4亿元（同比+69%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780826"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;芒果超媒9月1日涨幅&lt;/td&gt;
+&lt;td&gt;+20.02%（3日涨幅+44.44%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://36kr.com/p/3964575113436680?f=rss"&gt;36氪&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;海鸥住工连续涨停天数&lt;/td&gt;
+&lt;td&gt;7个交易日（累计涨幅95.54%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://36kr.com/newsflashes/3964807330176512?f=rss"&gt;36氪&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;英伟达对联发科投资额&lt;/td&gt;
+&lt;td&gt;35亿美元&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780783"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;诺瓦聚变Pre-A系列融资&lt;/td&gt;
+&lt;td&gt;12亿元（投后估值超百亿）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://36kr.com/p/3964357394750985?f=rss"&gt;36氪&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;巢匠科技天使轮系列融资&lt;/td&gt;
+&lt;td&gt;数亿元&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://36kr.com/p/3962818472901761?f=rss"&gt;36氪&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;北京银行上半年营收&lt;/td&gt;
+&lt;td&gt;382.48亿元（同比+5.60%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="https://wallstreetcn.com/articles/3780836"&gt;华尔街见闻&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;快手二季度营收&lt;/td&gt;
+&lt;td&gt;355亿元（同比+1.4%）&lt;/td&gt;
+&lt;td&gt;&lt;a href="http://www.geekpark.net/news/369631"&gt;极客公园&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 </description></item></channel></rss>
