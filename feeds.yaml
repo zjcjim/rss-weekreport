@@ -1,0 +1,29 @@
+timezone: Asia/Shanghai
+lookback_days: 7
+max_items_per_report: 80
+
+feeds:
+  - name: 36氪
+    url: http://www.36kr.com/feed
+    category: 财经
+    enabled: true
+
+  - name: 华尔街见闻
+    url: https://feed.wallstreetcn.com/wallstreetcn/news/global
+    category: 财经
+    enabled: true
+
+  - name: 晚点LatePost
+    url: https://wechat2rss.bestblogs.dev/feed/c442206ec9957f3c52f2f40300ca532079538b31.xml
+    category: 财经
+    enabled: true
+
+  - name: 极客公园
+    url: http://www.geekpark.net/rss
+    category: 科技
+    enabled: true
+
+  - name: 少数派
+    url: https://feedex.net/feed/sspai.com/feed
+    category: 科技
+    enabled: true

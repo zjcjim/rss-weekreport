@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+import rss_weekreport
+
+
+def test_normalize_entry_is_stable_and_strips_html() -> None:
+    feed = {"name": "Test", "category": "技术"}
+    entry = {
+        "id": "entry-1",
+        "title": " A title ",
+        "link": "https://example.com/1",
+        "summary": "<p>Hello &amp; goodbye</p>",
+    }
+    first = rss_weekreport.normalize_entry(feed, entry, "2026-09-01T00:00:00+00:00")
+    second = rss_weekreport.normalize_entry(feed, entry, "2026-09-02T00:00:00+00:00")
+
+    assert first["id"] == second["id"]
+    assert first["summary"] == "Hello & goodbye"
+
+
+def test_collect_deduplicates_existing_items(tmp_path: Path) -> None:
+    config = tmp_path / "feeds.yaml"
+    config.write_text(
+        "feeds:\n  - name: Test\n    url: https://example.com/feed\n    enabled: true\n",
+        encoding="utf-8",
+    )
+    data = tmp_path / "items.jsonl"
+    parsed = SimpleNamespace(
+        status=200,
+        bozo=False,
+        entries=[{"id": "1", "title": "One", "link": "https://example.com/1"}],
+    )
+
+    with patch.object(rss_weekreport.feedparser, "parse", return_value=parsed):
+        assert rss_weekreport.collect(config, data) == 0
+        assert rss_weekreport.collect(config, data) == 0
+
+    lines = [json.loads(line) for line in data.read_text(encoding="utf-8").splitlines()]
+    assert len(lines) == 1
+
+
+def test_select_items_uses_collection_time() -> None:
+    now = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    items = [
+        {"id": "old", "collected_at": (now - timedelta(days=8)).isoformat()},
+        {"id": "new", "collected_at": (now - timedelta(days=1)).isoformat()},
+    ]
+    selected = rss_weekreport.select_items(items, now, days=7, maximum=10)
+    assert [item["id"] for item in selected] == ["new"]
+
+
+def test_call_deepseek_uses_v4_flash_non_thinking() -> None:
+    response = Mock()
+    response.json.return_value = {"choices": [{"message": {"content": "# 周报"}}]}
+    response.raise_for_status.return_value = None
+
+    with patch.object(rss_weekreport.requests, "post", return_value=response) as post:
+        assert rss_weekreport.call_deepseek("prompt", "secret") == "# 周报"
+
+    request = post.call_args.kwargs
+    assert request["json"]["model"] == "deepseek-v4-flash"
+    assert request["json"]["thinking"] == {"type": "disabled"}
+    assert request["headers"]["Authorization"] == "Bearer secret"
+
