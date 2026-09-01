@@ -243,16 +243,47 @@ def write_page(path: Path, title: str, body: str, feed_url: str) -> None:
     path.write_text(page, encoding="utf-8")
 
 
-def update_rss(
-    docs_dir: Path,
+def write_rss_document(
+    feed_path: Path,
     site_url: str,
+    feed_url: str,
+    feed_title: str,
+    description: str,
+    items: list[ET.Element],
+    now: datetime,
+) -> None:
+    ET.register_namespace("atom", ATOM_NAMESPACE)
+    rss = ET.Element("rss", {"version": "2.0"})
+    channel = ET.SubElement(rss, "channel")
+    ET.SubElement(channel, "title").text = feed_title
+    ET.SubElement(channel, "link").text = site_url
+    ET.SubElement(channel, "description").text = description
+    ET.SubElement(channel, "language").text = "zh-CN"
+    ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
+    ET.SubElement(
+        channel,
+        f"{{{ATOM_NAMESPACE}}}link",
+        {"href": feed_url, "rel": "self", "type": "application/rss+xml"},
+    )
+    for item in items:
+        channel.append(item)
+
+    feed_path.parent.mkdir(parents=True, exist_ok=True)
+    ET.ElementTree(rss).write(feed_path, encoding="utf-8", xml_declaration=True)
+
+
+def update_rss(
+    feed_path: Path,
+    site_url: str,
+    feed_url: str,
+    feed_title: str,
+    description: str,
     title: str,
     report_html: str,
     report_url: str,
     period: str,
     now: datetime,
-) -> Path:
-    feed_path = docs_dir / "feed.xml"
+) -> None:
     previous_items: list[ET.Element] = []
     if feed_path.exists():
         previous_channel = ET.parse(feed_path).getroot().find("channel")
@@ -274,25 +305,7 @@ def update_rss(
             items.append(item)
     items = items[:60]
 
-    ET.register_namespace("atom", ATOM_NAMESPACE)
-    rss = ET.Element("rss", {"version": "2.0"})
-    channel = ET.SubElement(rss, "channel")
-    ET.SubElement(channel, "title").text = "我的 RSS 新闻简报"
-    ET.SubElement(channel, "link").text = site_url
-    ET.SubElement(channel, "description").text = "DeepSeek 生成的中文新闻日报与周报"
-    ET.SubElement(channel, "language").text = "zh-CN"
-    ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
-    ET.SubElement(
-        channel,
-        f"{{{ATOM_NAMESPACE}}}link",
-        {"href": urljoin(site_url + "/", "feed.xml"), "rel": "self", "type": "application/rss+xml"},
-    )
-    for item in items:
-        channel.append(item)
-
-    docs_dir.mkdir(parents=True, exist_ok=True)
-    ET.ElementTree(rss).write(feed_path, encoding="utf-8", xml_declaration=True)
-    return feed_path
+    write_rss_document(feed_path, site_url, feed_url, feed_title, description, items, now)
 
 
 def write_index(docs_dir: Path, site_url: str) -> None:
@@ -304,12 +317,16 @@ def write_index(docs_dir: Path, site_url: str) -> None:
         f' <small>{html.escape(item.findtext("category", ""))}</small></li>'
         for item in entries
     )
-    feed_url = urljoin(site_url + "/", "feed.xml")
+    combined_feed_url = urljoin(site_url + "/", "feed.xml")
+    daily_feed_url = urljoin(site_url + "/", "daily/feed.xml")
+    weekly_feed_url = urljoin(site_url + "/", "weekly/feed.xml")
     page = f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>我的 RSS 新闻简报</title><link rel="alternate" type="application/rss+xml" href="{html.escape(feed_url, quote=True)}">
+<title>我的 RSS 新闻简报</title><link rel="alternate" type="application/rss+xml" href="{html.escape(combined_feed_url, quote=True)}">
 <style>body{{max-width:760px;margin:2rem auto;padding:0 1rem;font:17px/1.7 system-ui,sans-serif}}li{{margin:.7rem 0}}a{{color:#0969da}}</style>
-</head><body><h1>我的 RSS 新闻简报</h1><p><a href="{html.escape(feed_url, quote=True)}">订阅 RSS</a></p><ul>{links}</ul></body></html>
+</head><body><h1>我的 RSS 新闻简报</h1>
+<p>订阅：<a href="{html.escape(daily_feed_url, quote=True)}">日报</a> · <a href="{html.escape(weekly_feed_url, quote=True)}">周报</a> · <a href="{html.escape(combined_feed_url, quote=True)}">全部简报</a></p>
+<ul>{links}</ul></body></html>
 """
     (docs_dir / "index.html").write_text(page, encoding="utf-8")
     (docs_dir / ".nojekyll").touch()
@@ -325,13 +342,39 @@ def publish_report(
 ) -> None:
     title = report_title(report, "新闻日报" if period == "daily" else "新闻周报")
     relative_page = f"{period}/{output.stem}.html"
-    report_url = urljoin(site_url.rstrip("/") + "/", relative_page)
-    feed_url = urljoin(site_url.rstrip("/") + "/", "feed.xml")
+    site_url = site_url.rstrip("/")
+    report_url = urljoin(site_url + "/", relative_page)
+    combined_feed_url = urljoin(site_url + "/", "feed.xml")
+    period_feed_url = urljoin(site_url + "/", f"{period}/feed.xml")
     page_path = docs_dir / relative_page
-    write_page(page_path, title, report, feed_url)
+    write_page(page_path, title, report, period_feed_url)
     report_html = markdown_renderer().render(report)
-    update_rss(docs_dir, site_url.rstrip("/"), title, report_html, report_url, period, now)
-    write_index(docs_dir, site_url.rstrip("/"))
+    period_name = "日报" if period == "daily" else "周报"
+    update_rss(
+        docs_dir / period / "feed.xml",
+        site_url,
+        period_feed_url,
+        f"我的 RSS 新闻{period_name}",
+        f"DeepSeek 生成的中文新闻{period_name}",
+        title,
+        report_html,
+        report_url,
+        period,
+        now,
+    )
+    update_rss(
+        docs_dir / "feed.xml",
+        site_url,
+        combined_feed_url,
+        "我的 RSS 新闻简报",
+        "DeepSeek 生成的中文新闻日报与周报",
+        title,
+        report_html,
+        report_url,
+        period,
+        now,
+    )
+    write_index(docs_dir, site_url)
 
 
 def generate(

@@ -87,7 +87,7 @@ export DEEPSEEK_API_KEY="你的 API Key"
 
 ## 在手机上订阅
 
-程序会生成一个同时包含日报和周报的 RSS 2.0 Feed。要让手机访问它，需要启用 GitHub Pages：
+程序会生成日报、周报两个独立的 RSS 2.0 Feed，并保留一个包含全部简报的综合 Feed。要让手机访问它们，需要启用 GitHub Pages：
 
 1. 进入仓库 `Settings → Pages`。
 2. 在 `Build and deployment` 中选择 `Deploy from a branch`。
@@ -97,10 +97,12 @@ export DEEPSEEK_API_KEY="你的 API Key"
 本仓库对应的订阅地址是：
 
 ```text
-https://zjcjim.github.io/rss-weekreport/feed.xml
+日报：https://zjcjim.github.io/rss-weekreport/daily/feed.xml
+周报：https://zjcjim.github.io/rss-weekreport/weekly/feed.xml
+全部：https://zjcjim.github.io/rss-weekreport/feed.xml
 ```
 
-把这个地址添加到 NetNewsWire、Reeder、Feedly 等手机 RSS 阅读器即可。日报和周报共用一个订阅源，每篇简报也有独立 HTML 阅读页面。
+把需要的地址添加到 NetNewsWire、Reeder、Feedly 等手机 RSS 阅读器即可。每篇简报也有独立 HTML 阅读页面。
 
 注意：启用 GitHub Pages 后，`docs/` 中发布的简报内容会公开访问，即使源代码仓库是私有的。DeepSeek Key、`feeds.yaml` 和 `data/items.jsonl` 不会由 Pages 发布。
 

@@ -83,7 +83,7 @@ def test_build_prompt_uses_requested_period() -> None:
     assert "本周概览" in weekly
 
 
-def test_publish_report_updates_single_rss_feed(tmp_path: Path) -> None:
+def test_publish_report_updates_combined_and_period_feeds(tmp_path: Path) -> None:
     docs = tmp_path / "docs"
     now = datetime(2026, 9, 1, 19, 0, tzinfo=timezone.utc)
     daily = tmp_path / "reports" / "daily" / "2026-09-01.md"
@@ -103,12 +103,21 @@ def test_publish_report_updates_single_rss_feed(tmp_path: Path) -> None:
     items = parsed.getroot().find("channel").findall("item")
     assert len(items) == 2
     assert items[0].findtext("title") == "今日日报（更新）"
+    daily_items = rss_weekreport.ET.parse(docs / "daily" / "feed.xml").getroot().find("channel").findall("item")
+    weekly_items = rss_weekreport.ET.parse(docs / "weekly" / "feed.xml").getroot().find("channel").findall("item")
+    assert len(daily_items) == 1
+    assert daily_items[0].findtext("title") == "今日日报（更新）"
+    assert len(weekly_items) == 1
+    assert weekly_items[0].findtext("title") == "本周周报"
     assert (docs / "daily" / "2026-09-01.html").exists()
     assert (docs / "weekly" / "2026-W36.html").exists()
     assert (docs / "index.html").exists()
     parsed_feed = rss_weekreport.feedparser.parse(str(docs / "feed.xml"))
     assert not parsed_feed.bozo
     assert len(parsed_feed.entries) == 2
+    assert 'href="https://example.github.io/news/daily/feed.xml"' in (
+        docs / "daily" / "2026-09-01.html"
+    ).read_text(encoding="utf-8")
 
 
 def test_write_page_renders_markdown_table(tmp_path: Path) -> None:
