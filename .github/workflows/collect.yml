@@ -2,8 +2,8 @@ name: Collect RSS
 
 on:
   schedule:
-    # Asia/Shanghai 08:15, 14:15, 20:15
-    - cron: "15 0,6,12 * * *"
+    # Asia/Shanghai 08:15, 14:15, 18:15
+    - cron: "15 0,6,10 * * *"
   workflow_dispatch:
 
 permissions:
@@ -35,4 +35,3 @@ jobs:
           git add data/items.jsonl
           git diff --cached --quiet || git commit -m "data: collect RSS items"
           git push
-

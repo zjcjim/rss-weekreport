@@ -1,6 +1,9 @@
 timezone: Asia/Shanghai
-lookback_days: 7
-max_items_per_report: 80
+site_url: https://zjcjim.github.io/rss-weekreport
+daily_lookback_days: 1
+weekly_lookback_days: 7
+daily_max_items: 50
+weekly_max_items: 80
 
 feeds:
   - name: 36氪

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import copy
 import hashlib
 import html
 import json
@@ -9,21 +10,27 @@ import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
+from xml.etree import ElementTree as ET
 from zoneinfo import ZoneInfo
 
 import feedparser
 import requests
 import yaml
+from markdown_it import MarkdownIt
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / "feeds.yaml"
 DEFAULT_DATA = ROOT / "data" / "items.jsonl"
 DEFAULT_REPORTS = ROOT / "reports"
+DEFAULT_DOCS = ROOT / "docs"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-v4-flash"
+ATOM_NAMESPACE = "http://www.w3.org/2005/Atom"
 
 
 def load_config(path: Path) -> dict[str, Any]:
@@ -143,9 +150,17 @@ def select_items(
     return selected[:maximum]
 
 
-def build_prompt(items: list[dict[str, Any]], start: datetime, end: datetime) -> str:
+def build_prompt(
+    items: list[dict[str, Any]], start: datetime, end: datetime, period: str
+) -> str:
     source_data = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
-    return f"""请根据下面的 RSS 条目编写一份中文新闻周报。
+    report_name = "新闻日报" if period == "daily" else "新闻周报"
+    structure = (
+        "标题、今日概览、重点新闻、分类阅读、值得阅读全文、数据统计"
+        if period == "daily"
+        else "标题、本周概览、最值得关注、分类阅读、值得阅读全文、数据统计"
+    )
+    return f"""请根据下面的 RSS 条目编写一份中文{report_name}。
 
 时间范围：{start.date().isoformat()} 至 {end.date().isoformat()}
 
@@ -154,8 +169,8 @@ def build_prompt(items: list[dict[str, Any]], start: datetime, end: datetime) ->
 2. 只能使用给定条目中的事实，不得补充未经来源支持的具体数字或结论。
 3. 合并明显属于同一事件的报道，避免按来源机械罗列。
 4. 每项重要结论都附上至少一个 Markdown 原文链接；不得编造或修改 URL。
-5. 使用以下结构：标题、本周概览、最值得关注、分类阅读、值得阅读全文、数据统计。
-6. “最值得关注”说明发生了什么、为什么值得关注；不确定时明确写出信息不足。
+5. 使用以下结构：{structure}。
+6. 重点条目说明发生了什么、为什么值得关注；不确定时明确写出信息不足。
 7. 输出纯 Markdown，不使用代码围栏，不加入开场白。
 
 RSS 条目 JSON：
@@ -191,23 +206,151 @@ def call_deepseek(prompt: str, api_key: str) -> str:
     return content.strip().removeprefix("```markdown").removesuffix("```").strip()
 
 
-def generate(config_path: Path, data_path: Path, reports_dir: Path) -> Path:
+def report_title(markdown: str, fallback: str) -> str:
+    for line in markdown.splitlines():
+        if line.startswith("# "):
+            return clean_text(line[2:], 200)
+    return fallback
+
+
+def write_page(path: Path, title: str, body: str, feed_url: str) -> None:
+    renderer = MarkdownIt("commonmark", {"html": False, "linkify": True})
+    body_html = renderer.render(body)
+    page = f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{html.escape(title)}</title>
+  <link rel="alternate" type="application/rss+xml" title="RSS 新闻简报" href="{html.escape(feed_url, quote=True)}">
+  <style>
+    body {{ max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #202124; font: 17px/1.75 system-ui, sans-serif; }}
+    h1, h2, h3 {{ line-height: 1.3; }}
+    a {{ color: #0969da; }}
+    blockquote {{ border-left: 4px solid #d0d7de; margin-left: 0; padding-left: 1rem; color: #59636e; }}
+  </style>
+</head>
+<body>{body_html}</body>
+</html>
+"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(page, encoding="utf-8")
+
+
+def update_rss(
+    docs_dir: Path,
+    site_url: str,
+    title: str,
+    report_html: str,
+    report_url: str,
+    period: str,
+    now: datetime,
+) -> Path:
+    feed_path = docs_dir / "feed.xml"
+    previous_items: list[ET.Element] = []
+    if feed_path.exists():
+        previous_channel = ET.parse(feed_path).getroot().find("channel")
+        if previous_channel is not None:
+            previous_items = [copy.deepcopy(item) for item in previous_channel.findall("item")]
+
+    new_item = ET.Element("item")
+    ET.SubElement(new_item, "title").text = title
+    ET.SubElement(new_item, "link").text = report_url
+    ET.SubElement(new_item, "guid", {"isPermaLink": "true"}).text = report_url
+    ET.SubElement(new_item, "pubDate").text = format_datetime(now)
+    ET.SubElement(new_item, "category").text = "日报" if period == "daily" else "周报"
+    ET.SubElement(new_item, "description").text = report_html
+
+    items = [new_item]
+    for item in previous_items:
+        guid = item.findtext("guid")
+        if guid != report_url:
+            items.append(item)
+    items = items[:60]
+
+    ET.register_namespace("atom", ATOM_NAMESPACE)
+    rss = ET.Element("rss", {"version": "2.0"})
+    channel = ET.SubElement(rss, "channel")
+    ET.SubElement(channel, "title").text = "我的 RSS 新闻简报"
+    ET.SubElement(channel, "link").text = site_url
+    ET.SubElement(channel, "description").text = "DeepSeek 生成的中文新闻日报与周报"
+    ET.SubElement(channel, "language").text = "zh-CN"
+    ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
+    ET.SubElement(
+        channel,
+        f"{{{ATOM_NAMESPACE}}}link",
+        {"href": urljoin(site_url + "/", "feed.xml"), "rel": "self", "type": "application/rss+xml"},
+    )
+    for item in items:
+        channel.append(item)
+
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    ET.ElementTree(rss).write(feed_path, encoding="utf-8", xml_declaration=True)
+    return feed_path
+
+
+def write_index(docs_dir: Path, site_url: str) -> None:
+    channel = ET.parse(docs_dir / "feed.xml").getroot().find("channel")
+    entries = [] if channel is None else channel.findall("item")
+    links = "\n".join(
+        f'<li><a href="{html.escape(item.findtext("link", ""), quote=True)}">'
+        f'{html.escape(item.findtext("title", "未命名简报"))}</a>'
+        f' <small>{html.escape(item.findtext("category", ""))}</small></li>'
+        for item in entries
+    )
+    feed_url = urljoin(site_url + "/", "feed.xml")
+    page = f"""<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的 RSS 新闻简报</title><link rel="alternate" type="application/rss+xml" href="{html.escape(feed_url, quote=True)}">
+<style>body{{max-width:760px;margin:2rem auto;padding:0 1rem;font:17px/1.7 system-ui,sans-serif}}li{{margin:.7rem 0}}a{{color:#0969da}}</style>
+</head><body><h1>我的 RSS 新闻简报</h1><p><a href="{html.escape(feed_url, quote=True)}">订阅 RSS</a></p><ul>{links}</ul></body></html>
+"""
+    (docs_dir / "index.html").write_text(page, encoding="utf-8")
+    (docs_dir / ".nojekyll").touch()
+
+
+def publish_report(
+    docs_dir: Path,
+    site_url: str,
+    output: Path,
+    report: str,
+    period: str,
+    now: datetime,
+) -> None:
+    title = report_title(report, "新闻日报" if period == "daily" else "新闻周报")
+    relative_page = f"{period}/{output.stem}.html"
+    report_url = urljoin(site_url.rstrip("/") + "/", relative_page)
+    feed_url = urljoin(site_url.rstrip("/") + "/", "feed.xml")
+    page_path = docs_dir / relative_page
+    write_page(page_path, title, report, feed_url)
+    renderer = MarkdownIt("commonmark", {"html": False, "linkify": True})
+    update_rss(docs_dir, site_url.rstrip("/"), title, renderer.render(report), report_url, period, now)
+    write_index(docs_dir, site_url.rstrip("/"))
+
+
+def generate(
+    config_path: Path, data_path: Path, reports_dir: Path, docs_dir: Path, period: str
+) -> Path:
     api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
         raise RuntimeError("缺少 DEEPSEEK_API_KEY")
     config = load_config(config_path)
+    site_url = os.getenv("SITE_URL") or config.get("site_url")
+    if not site_url:
+        raise RuntimeError("缺少 site_url 配置，无法生成可订阅的 RSS 地址")
     zone = ZoneInfo(str(config.get("timezone", "Asia/Shanghai")))
     now = datetime.now(zone)
-    days = int(config.get("lookback_days", 7))
-    maximum = int(config.get("max_items_per_report", 80))
+    days = int(config.get(f"{period}_lookback_days", 1 if period == "daily" else 7))
+    maximum = int(config.get(f"{period}_max_items", 50 if period == "daily" else 80))
     items = select_items(load_items(data_path), now, days, maximum)
     if not items:
-        raise RuntimeError("过去一周没有可用于生成周报的 RSS 条目")
+        raise RuntimeError(f"过去 {days} 天没有可用于生成简报的 RSS 条目")
 
     start = now - timedelta(days=days)
-    report = call_deepseek(build_prompt(items, start, now), api_key)
+    report = call_deepseek(build_prompt(items, start, now, period), api_key)
     year, week, _ = now.isocalendar()
-    output = reports_dir / f"{year}-W{week:02d}.md"
+    filename = f"{now.date().isoformat()}.md" if period == "daily" else f"{year}-W{week:02d}.md"
+    output = reports_dir / period / filename
     output.parent.mkdir(parents=True, exist_ok=True)
     model = os.getenv("DEEPSEEK_MODEL", DEEPSEEK_MODEL)
     metadata = (
@@ -215,7 +358,8 @@ def generate(config_path: Path, data_path: Path, reports_dir: Path) -> Path:
         f"生成时间：{now.isoformat()} -->\n\n"
     )
     output.write_text(metadata + report + "\n", encoding="utf-8")
-    print(f"周报已生成：{output}")
+    publish_report(docs_dir, str(site_url), output, report, period, now)
+    print(f"{'日报' if period == 'daily' else '周报'}已生成：{output}")
     return output
 
 
@@ -227,12 +371,14 @@ def main() -> int:
     subparsers.add_parser("collect", help="采集 RSS 并写入 JSONL")
     generate_parser = subparsers.add_parser("generate", help="调用 DeepSeek 生成周报")
     generate_parser.add_argument("--reports-dir", type=Path, default=DEFAULT_REPORTS)
+    generate_parser.add_argument("--docs-dir", type=Path, default=DEFAULT_DOCS)
+    generate_parser.add_argument("--period", choices=("daily", "weekly"), required=True)
     args = parser.parse_args()
 
     try:
         if args.command == "collect":
             return collect(args.config, args.data)
-        generate(args.config, args.data, args.reports_dir)
+        generate(args.config, args.data, args.reports_dir, args.docs_dir, args.period)
         return 0
     except (OSError, ValueError, RuntimeError, requests.RequestException) as exc:
         print(f"错误: {exc}", file=sys.stderr)

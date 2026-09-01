@@ -1,13 +1,15 @@
-# RSS 周报生成器
+# RSS 日报与周报生成器
 
-使用 GitHub Actions 在云端定时采集 RSS，并调用 DeepSeek V4 Flash 生成中文 Markdown 周报。电脑无需保持开机。
+使用 GitHub Actions 在云端定时采集 RSS，并调用 DeepSeek V4 Flash 生成中文日报和周报。生成结果可以通过 GitHub Pages 作为 RSS 源订阅，电脑无需保持开机。
 
 ## 工作方式
 
-- 每天北京时间 08:15、14:15、20:15 采集 RSS。
+- 每天北京时间 08:15、14:15、18:15 采集 RSS。
 - 使用稳定条目标识去重，将新增条目追加到 `data/items.jsonl`。
-- 每周日北京时间 20:30 收集最新条目并生成 `reports/YYYY-Www.md`。
-- RSS 内容只在周报生成时发送给 DeepSeek；日常采集不消耗模型 Token。
+- 每天北京时间 19:00 生成 `reports/daily/YYYY-MM-DD.md` 日报。
+- 每周日北京时间 19:00 额外生成 `reports/weekly/YYYY-Www.md` 周报。
+- 每次出刊同步更新 `docs/feed.xml`、HTML 阅读页面和报告索引。
+- RSS 内容只在生成日报或周报时发送给 DeepSeek；日常采集不消耗模型 Token。
 
 GitHub 的定时任务可能延迟，以上时间不是严格实时保证。
 
@@ -19,8 +21,11 @@ GitHub 的定时任务可能延迟，以上时间不是严格实时保证。
 
 ```yaml
 timezone: Asia/Shanghai
-lookback_days: 7
-max_items_per_report: 80
+site_url: https://你的用户名.github.io/rss-weekreport
+daily_lookback_days: 1
+weekly_lookback_days: 7
+daily_max_items: 50
+weekly_max_items: 80
 
 feeds:
   - name: Example Tech
@@ -58,10 +63,10 @@ feeds:
 
 1. 手动运行 `Collect RSS`。
 2. 确认 `data/items.jsonl` 出现新增条目。
-3. 手动运行 `Generate Weekly Report`。
-4. 确认 `reports/` 中出现本周 Markdown 文件。
+3. 手动运行 `Generate Daily Report` 和 `Generate Weekly Report`。
+4. 确认 `reports/` 中出现日报和周报，`docs/feed.xml` 已生成。
 
-当前示例源默认禁用；至少启用一个真实 RSS 源后才会采集数据。
+当前 `feeds.yaml` 中导入的订阅已经启用。
 
 ## 本地验证
 
@@ -72,12 +77,32 @@ python3 -m venv .venv
 .venv/bin/python src/rss_weekreport.py collect
 ```
 
-生成周报前临时设置 Key：
+生成日报或周报前临时设置 Key：
 
 ```bash
 export DEEPSEEK_API_KEY="你的 API Key"
-.venv/bin/python src/rss_weekreport.py generate
+.venv/bin/python src/rss_weekreport.py generate --period daily
+.venv/bin/python src/rss_weekreport.py generate --period weekly
 ```
+
+## 在手机上订阅
+
+程序会生成一个同时包含日报和周报的 RSS 2.0 Feed。要让手机访问它，需要启用 GitHub Pages：
+
+1. 进入仓库 `Settings → Pages`。
+2. 在 `Build and deployment` 中选择 `Deploy from a branch`。
+3. Branch 选择 `main`，目录选择 `/docs`，保存。
+4. 等待首次部署完成。
+
+本仓库对应的订阅地址是：
+
+```text
+https://zjcjim.github.io/rss-weekreport/feed.xml
+```
+
+把这个地址添加到 NetNewsWire、Reeder、Feedly 等手机 RSS 阅读器即可。日报和周报共用一个订阅源，每篇简报也有独立 HTML 阅读页面。
+
+注意：启用 GitHub Pages 后，`docs/` 中发布的简报内容会公开访问，即使源代码仓库是私有的。DeepSeek Key、`feeds.yaml` 和 `data/items.jsonl` 不会由 Pages 发布。
 
 ## 模型配置
 
@@ -94,4 +119,4 @@ export DEEPSEEK_API_KEY="你的 API Key"
 - 第一版使用 RSS 自带标题和摘要，不主动抓取网页全文。
 - 部分 RSS 源可能屏蔽 GitHub Runner 的云端 IP。
 - `data/items.jsonl` 会长期增长；数据量明显增大后应按月份归档。
-- 第一版将周报保存到仓库，尚未配置邮件或其他消息推送。
+- GitHub Free 对私有仓库的 Pages 可用性取决于账户方案；如果仓库设置中没有 Pages 发布选项，需要升级方案或使用单独的公开发布仓库。

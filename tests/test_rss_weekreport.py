@@ -71,3 +71,41 @@ def test_call_deepseek_uses_v4_flash_non_thinking() -> None:
     assert request["json"]["thinking"] == {"type": "disabled"}
     assert request["headers"]["Authorization"] == "Bearer secret"
 
+
+def test_build_prompt_uses_requested_period() -> None:
+    now = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    daily = rss_weekreport.build_prompt([], now - timedelta(days=1), now, "daily")
+    weekly = rss_weekreport.build_prompt([], now - timedelta(days=7), now, "weekly")
+
+    assert "新闻日报" in daily
+    assert "今日概览" in daily
+    assert "新闻周报" in weekly
+    assert "本周概览" in weekly
+
+
+def test_publish_report_updates_single_rss_feed(tmp_path: Path) -> None:
+    docs = tmp_path / "docs"
+    now = datetime(2026, 9, 1, 19, 0, tzinfo=timezone.utc)
+    daily = tmp_path / "reports" / "daily" / "2026-09-01.md"
+    weekly = tmp_path / "reports" / "weekly" / "2026-W36.md"
+
+    rss_weekreport.publish_report(
+        docs, "https://example.github.io/news", daily, "# 今日日报\n\n内容", "daily", now
+    )
+    rss_weekreport.publish_report(
+        docs, "https://example.github.io/news", weekly, "# 本周周报\n\n内容", "weekly", now
+    )
+    rss_weekreport.publish_report(
+        docs, "https://example.github.io/news", daily, "# 今日日报（更新）", "daily", now
+    )
+
+    parsed = rss_weekreport.ET.parse(docs / "feed.xml")
+    items = parsed.getroot().find("channel").findall("item")
+    assert len(items) == 2
+    assert items[0].findtext("title") == "今日日报（更新）"
+    assert (docs / "daily" / "2026-09-01.html").exists()
+    assert (docs / "weekly" / "2026-W36.html").exists()
+    assert (docs / "index.html").exists()
+    parsed_feed = rss_weekreport.feedparser.parse(str(docs / "feed.xml"))
+    assert not parsed_feed.bozo
+    assert len(parsed_feed.entries) == 2
