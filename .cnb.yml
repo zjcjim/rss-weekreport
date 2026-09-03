@@ -10,6 +10,8 @@ main:
           script: python --version
         - name: Verify DeepSeek key injection
           script: test -n "$DEEPSEEK_API_KEY"
+        - name: Verify EdgeOne key injection
+          script: test -n "$EDGEONE_API_TOKEN"
         - name: Install test dependencies
           script: pip install --no-cache-dir -r requirements-dev.txt
         - name: Run tests
@@ -58,6 +60,15 @@ main:
           script: python src/rss_weekreport.py generate --period weekly
         - name: Validate weekly artifacts
           script: python -c 'from pathlib import Path; from xml.etree import ElementTree as ET; assert list(Path("reports/weekly").glob("*.md")); ET.parse("docs/weekly/feed.xml"); ET.parse("docs/feed.xml"); print("Weekly report and feeds are valid")'
+
+  web_trigger_deploy:
+    - name: Deploy current reports to EdgeOne Pages
+      imports:
+        - https://cnb.cool/akanejim/rss-briefing-secrets/-/blob/main/deepseek.yml
+      stages:
+        - name: Deploy docs to EdgeOne Pages
+          image: node:20
+          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production
 
   "crontab: 15 8,14,18 * * *":
     - name: Collect and persist RSS items
@@ -126,6 +137,9 @@ main:
               git pull --rebase origin main
               git push origin HEAD:main -o ci.skip
             fi
+        - name: Deploy daily report to EdgeOne Pages
+          image: node:20
+          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production
 
   "crontab: 0 19 * * 0":
     - name: Generate and persist weekly report
@@ -162,3 +176,6 @@ main:
               git pull --rebase origin main
               git push origin HEAD:main -o ci.skip
             fi
+        - name: Deploy weekly report to EdgeOne Pages
+          image: node:20
+          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production

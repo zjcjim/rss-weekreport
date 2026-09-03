@@ -22,3 +22,10 @@ branch:
         permissions:
           roles:
             - owner
+      - name: 部署到 EdgeOne Pages
+        description: 将 docs 目录部署到 EdgeOne Pages 正式环境
+        event: web_trigger_deploy
+        groupName: 发布
+        permissions:
+          roles:
+            - owner
