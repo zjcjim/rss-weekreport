@@ -25,7 +25,7 @@ main:
         - name: Collect RSS feeds
           script: python src/rss_weekreport.py collect
         - name: Validate collected data
-          script: python -c 'import json; from pathlib import Path; lines = Path("data/items.jsonl").read_text(encoding="utf-8").splitlines(); assert lines; [json.loads(line) for line in lines]; print(f"Validated {len(lines)} RSS items")'
+          script: python -c 'import json; from pathlib import Path; lines = [line for line in Path("data/items.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]; assert lines; [json.loads(line) for line in lines]; print(f"Validated {len(lines)} RSS items")'
 
   web_trigger_daily:
     - name: Validate daily report generation
