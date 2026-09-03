@@ -68,7 +68,7 @@ main:
       stages:
         - name: Deploy docs to EdgeOne Pages
           image: node:20
-          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production
+          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production --site china
 
   "crontab: 15 8,14,18 * * *":
     - name: Collect and persist RSS items
@@ -139,7 +139,7 @@ main:
             fi
         - name: Deploy daily report to EdgeOne Pages
           image: node:20
-          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production
+          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production --site china
 
   "crontab: 0 19 * * 0":
     - name: Generate and persist weekly report
@@ -178,4 +178,4 @@ main:
             fi
         - name: Deploy weekly report to EdgeOne Pages
           image: node:20
-          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production
+          script: npx --yes edgeone@1.6.28 makers deploy ./docs -n rss-briefing -t "$EDGEONE_API_TOKEN" -e production --site china
