@@ -69,6 +69,11 @@ main:
         timeout: 1800
         wait: true
       stages:
+        - name: Install Git
+          script: |
+            apt-get update
+            apt-get install --no-install-recommends -y git
+            rm -rf /var/lib/apt/lists/*
         - name: Install runtime dependencies
           script: pip install --no-cache-dir -r requirements.txt
         - name: Collect RSS feeds
@@ -98,6 +103,11 @@ main:
         timeout: 1800
         wait: true
       stages:
+        - name: Install Git
+          script: |
+            apt-get update
+            apt-get install --no-install-recommends -y git
+            rm -rf /var/lib/apt/lists/*
         - name: Install runtime dependencies
           script: pip install --no-cache-dir -r requirements.txt
         - name: Collect latest RSS feeds
@@ -129,6 +139,11 @@ main:
         timeout: 1800
         wait: true
       stages:
+        - name: Install Git
+          script: |
+            apt-get update
+            apt-get install --no-install-recommends -y git
+            rm -rf /var/lib/apt/lists/*
         - name: Install runtime dependencies
           script: pip install --no-cache-dir -r requirements.txt
         - name: Collect latest RSS feeds
