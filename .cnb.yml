@@ -14,3 +14,47 @@ main:
           script: pip install --no-cache-dir -r requirements-dev.txt
         - name: Run tests
           script: pytest
+
+  web_trigger_collect:
+    - name: Validate RSS collection
+      docker:
+        image: python:3.12-slim
+      stages:
+        - name: Install runtime dependencies
+          script: pip install --no-cache-dir -r requirements.txt
+        - name: Collect RSS feeds
+          script: python src/rss_weekreport.py collect
+        - name: Validate collected data
+          script: python -c 'import json; from pathlib import Path; lines = Path("data/items.jsonl").read_text(encoding="utf-8").splitlines(); assert lines; [json.loads(line) for line in lines]; print(f"Validated {len(lines)} RSS items")'
+
+  web_trigger_daily:
+    - name: Validate daily report generation
+      docker:
+        image: python:3.12-slim
+      imports:
+        - https://cnb.cool/akanejim/rss-briefing-secrets/-/blob/main/deepseek.yml
+      stages:
+        - name: Install runtime dependencies
+          script: pip install --no-cache-dir -r requirements.txt
+        - name: Collect latest RSS feeds
+          script: python src/rss_weekreport.py collect
+        - name: Generate daily report
+          script: python src/rss_weekreport.py generate --period daily
+        - name: Validate daily artifacts
+          script: python -c 'from pathlib import Path; from xml.etree import ElementTree as ET; assert list(Path("reports/daily").glob("*.md")); ET.parse("docs/daily/feed.xml"); ET.parse("docs/feed.xml"); print("Daily report and feeds are valid")'
+
+  web_trigger_weekly:
+    - name: Validate weekly report generation
+      docker:
+        image: python:3.12-slim
+      imports:
+        - https://cnb.cool/akanejim/rss-briefing-secrets/-/blob/main/deepseek.yml
+      stages:
+        - name: Install runtime dependencies
+          script: pip install --no-cache-dir -r requirements.txt
+        - name: Collect latest RSS feeds
+          script: python src/rss_weekreport.py collect
+        - name: Generate weekly report
+          script: python src/rss_weekreport.py generate --period weekly
+        - name: Validate weekly artifacts
+          script: python -c 'from pathlib import Path; from xml.etree import ElementTree as ET; assert list(Path("reports/weekly").glob("*.md")); ET.parse("docs/weekly/feed.xml"); ET.parse("docs/feed.xml"); print("Weekly report and feeds are valid")'

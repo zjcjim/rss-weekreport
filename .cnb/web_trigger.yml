@@ -1,0 +1,24 @@
+branch:
+  - reg: ^main$
+    buttons:
+      - name: 验证 RSS 采集
+        description: 在临时环境中采集 RSS，不提交结果
+        event: web_trigger_collect
+        groupName: 迁移验收
+        permissions:
+          roles:
+            - owner
+      - name: 验证日报生成
+        description: 调用 DeepSeek 生成日报，不提交结果
+        event: web_trigger_daily
+        groupName: 迁移验收
+        permissions:
+          roles:
+            - owner
+      - name: 验证周报生成
+        description: 调用 DeepSeek 生成周报，不提交结果
+        event: web_trigger_weekly
+        groupName: 迁移验收
+        permissions:
+          roles:
+            - owner
