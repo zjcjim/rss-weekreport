@@ -1,0 +1,12 @@
+main:
+  push:
+    - name: Validate Python project
+      docker:
+        image: python:3.12-slim
+      stages:
+        - name: Show Python version
+          script: python --version
+        - name: Install test dependencies
+          script: pip install --no-cache-dir -r requirements-dev.txt
+        - name: Run tests
+          script: pytest
