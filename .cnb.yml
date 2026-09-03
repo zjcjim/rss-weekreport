@@ -58,3 +58,92 @@ main:
           script: python src/rss_weekreport.py generate --period weekly
         - name: Validate weekly artifacts
           script: python -c 'from pathlib import Path; from xml.etree import ElementTree as ET; assert list(Path("reports/weekly").glob("*.md")); ET.parse("docs/weekly/feed.xml"); ET.parse("docs/feed.xml"); print("Weekly report and feeds are valid")'
+
+  "crontab: 15 8,14,18 * * *":
+    - name: Collect and persist RSS items
+      docker:
+        image: python:3.12-slim
+      lock:
+        key: rss-data-writer
+        expires: 1800
+        timeout: 1800
+        wait: true
+      stages:
+        - name: Install runtime dependencies
+          script: pip install --no-cache-dir -r requirements.txt
+        - name: Collect RSS feeds
+          script: python src/rss_weekreport.py collect
+        - name: Persist new items
+          script: |
+            git config user.name "cnb-bot"
+            git config user.email "cnb-bot@users.noreply.cnb.cool"
+            git add data/items.jsonl
+            if git diff --cached --quiet; then
+              echo "No new RSS items to persist"
+            else
+              git commit -m "data: collect RSS items [skip ci]"
+              git pull --rebase origin main
+              git push origin HEAD:main -o ci.skip
+            fi
+
+  "crontab: 17 19 * * *":
+    - name: Generate and persist daily report
+      docker:
+        image: python:3.12-slim
+      imports:
+        - https://cnb.cool/akanejim/rss-briefing-secrets/-/blob/main/deepseek.yml
+      lock:
+        key: rss-data-writer
+        expires: 1800
+        timeout: 1800
+        wait: true
+      stages:
+        - name: Install runtime dependencies
+          script: pip install --no-cache-dir -r requirements.txt
+        - name: Collect latest RSS feeds
+          script: python src/rss_weekreport.py collect
+        - name: Generate daily report
+          script: python src/rss_weekreport.py generate --period daily
+        - name: Persist daily report
+          script: |
+            git config user.name "cnb-bot"
+            git config user.email "cnb-bot@users.noreply.cnb.cool"
+            git add data/items.jsonl reports/ docs/
+            if git diff --cached --quiet; then
+              echo "No daily report changes to persist"
+            else
+              git commit -m "docs: generate daily RSS report [skip ci]"
+              git pull --rebase origin main
+              git push origin HEAD:main -o ci.skip
+            fi
+
+  "crontab: 0 19 * * 0":
+    - name: Generate and persist weekly report
+      docker:
+        image: python:3.12-slim
+      imports:
+        - https://cnb.cool/akanejim/rss-briefing-secrets/-/blob/main/deepseek.yml
+      lock:
+        key: rss-data-writer
+        expires: 1800
+        timeout: 1800
+        wait: true
+      stages:
+        - name: Install runtime dependencies
+          script: pip install --no-cache-dir -r requirements.txt
+        - name: Collect latest RSS feeds
+          script: python src/rss_weekreport.py collect
+        - name: Generate weekly report
+          script: python src/rss_weekreport.py generate --period weekly
+        - name: Persist weekly report
+          script: |
+            git config user.name "cnb-bot"
+            git config user.email "cnb-bot@users.noreply.cnb.cool"
+            git add data/items.jsonl reports/ docs/
+            if git diff --cached --quiet; then
+              echo "No weekly report changes to persist"
+            else
+              git commit -m "docs: generate weekly RSS report [skip ci]"
+              git pull --rebase origin main
+              git push origin HEAD:main -o ci.skip
+            fi

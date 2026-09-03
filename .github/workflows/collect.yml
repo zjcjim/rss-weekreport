@@ -1,9 +1,6 @@
 name: Collect RSS
 
 on:
-  schedule:
-    # Asia/Shanghai 08:15, 14:15, 18:15
-    - cron: "15 0,6,10 * * *"
   workflow_dispatch:
 
 permissions:

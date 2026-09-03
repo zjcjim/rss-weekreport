@@ -1,17 +1,17 @@
 # RSS 日报与周报生成器
 
-使用 GitHub Actions 在云端定时采集 RSS，并调用 DeepSeek V4 Flash 生成中文日报和周报。生成结果可以通过 GitHub Pages 作为 RSS 源订阅，电脑无需保持开机。
+使用 CNB 云原生构建在云端定时采集 RSS，并调用 DeepSeek V4 Flash 生成中文日报和周报。电脑无需保持开机。GitHub Actions 目前仅保留手动触发，作为迁移期间的备用入口。
 
 ## 工作方式
 
 - 每天北京时间 08:15、14:15、18:15 采集 RSS。
 - 使用稳定条目标识去重，将新增条目追加到 `data/items.jsonl`。
-- 每天北京时间 19:00 生成 `reports/daily/YYYY-MM-DD.md` 日报。
+- 每天北京时间 19:17 生成 `reports/daily/YYYY-MM-DD.md` 日报。
 - 每周日北京时间 19:00 额外生成 `reports/weekly/YYYY-Www.md` 周报。
 - 每次出刊同步更新 `docs/feed.xml`、HTML 阅读页面和报告索引。
 - RSS 内容只在生成日报或周报时发送给 DeepSeek；日常采集不消耗模型 Token。
 
-GitHub 的定时任务可能延迟，以上时间不是严格实时保证。
+CNB 的定时任务使用 `Asia/Shanghai` 系统时区，以上时间仍不是严格实时保证。
 
 ## 配置
 

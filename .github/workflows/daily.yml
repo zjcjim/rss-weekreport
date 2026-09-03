@@ -1,9 +1,6 @@
 name: Generate Daily Report
 
 on:
-  schedule:
-    # Every day at 19:17 in Asia/Shanghai
-    - cron: "17 11 * * *"
   workflow_dispatch:
 
 permissions:
