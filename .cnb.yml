@@ -3,9 +3,13 @@ main:
     - name: Validate Python project
       docker:
         image: python:3.12-slim
+      imports:
+        - https://cnb.cool/akanejim/rss-briefing-secrets/-/blob/main/deepseek.yml
       stages:
         - name: Show Python version
           script: python --version
+        - name: Verify DeepSeek key injection
+          script: test -n "$DEEPSEEK_API_KEY"
         - name: Install test dependencies
           script: pip install --no-cache-dir -r requirements-dev.txt
         - name: Run tests
